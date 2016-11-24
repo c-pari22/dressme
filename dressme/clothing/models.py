@@ -7,12 +7,11 @@ from geopy.geocoders import Nominatim
 WEATHERURL = "http://api.openweathermap.org/data/2.5/forecast"
 
 weather_dict = {1: set([701, 721, 741, 761, 800, 801, 802, 803, 804, 951, 952, 953, 954, 955]),
-2: set([615, 620, 751, 300, 301, 500, 501]), 
+2 : set([615, 620, 751, 300, 301, 500, 501]), 
 3 : set([601, 602, 611, 612, 616, 621, 622]),
 4 : set([956, 957, 958, 960]), 
 5 : set([200, 201, 202, 210, 211, 212, 221, 230, 231, 232, 302, 310, 311, 312, 313, 314, 321, 502, 503, 504, 511, 520, 521, 522, 531]),
 6 : set([711, 731, 762, 771, 781, 900, 901, 902, 903, 904, 905, 906, 959, 961, 962])}
-
 
 
 # Create your models here.
@@ -37,6 +36,8 @@ class Wardrobe(models.Model):
 		(11, "SCARF"),
 		(12, "GLOVES"),
 		)
+	cloth_type_dict = dict(CLOTH_TYPES)
+	cloth_names_dict = dict(CLOTH_NAMES)
 
 	in_laundry = models.BooleanField(default = False)
 	for_cold = models.BooleanField(default = False)
@@ -52,14 +53,31 @@ class Wardrobe(models.Model):
 	cloth_type_dict = dict(CLOTH_TYPES)
 	cloth_names_dict = dict(CLOTH_NAMES)
 
-	def get_cloth_names():
-		return cloth_names_dict.values()
+	def get_cloth_map(self):
+		return self.cloth_names_dict
 		
 class StormChaser(User):
 	city = models.CharField(max_length = 30, blank=True)
 	state = models.CharField(max_length = 2, blank=True)
-	wardrobe = models.OneToOneField(Wardrobe, null=True)
-	
+	wardrobe = models.OneToOneField(Wardrobe)
+
+	def get_clean_clothes_map(self):
+		clean_clothes = {}
+		cloth_names = dict(Wardrobe.CLOTH_NAMES)
+		for key in cloth_names:
+			cloth_name = cloth_names[key]
+			num_cloths = len(self.wardrobe.objects.filter(cloth_name=cloth_name, in_laundry=False))
+			clean_clothes[cloth_name] = num_cloths
+		return clean_clothes
+
+	def get_dirty_clothes_map(self):
+		dirty_clothes = {}
+		cloth_names = dict(Wardrobe.CLOTH_NAMES)
+		for key in cloth_names:
+			cloth_name = cloth_names[key]
+			num_cloths = len(self.wardrobe.objects.filter(cloth_name=cloth_name, in_laundry=True))
+			dirty_clothes[cloth_name] = num_cloths
+		return dirty_clothes	
 
 	def getOutfits(self):
 		api_id = '329ece2a6e7bcf2ad488f635b21588d0'

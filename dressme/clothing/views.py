@@ -28,7 +28,19 @@ CAL = None
 
 @login_required(login_url="/user_login/")
 def index(request):
-	return render(request, "clothing/index.html")
+
+	#works under necessary condition that we have a user
+
+
+	user = request.user 
+	#empty check but we'll do it anyway 
+	if user.is_authenticated:
+		storm_chaser = StormChaser.objects.filter(username=user.username)[0]
+		clean_clothes = storm_chaser.get_clean_clothes_map()
+		dirty_clothes = storm_chaser.get_dirty_clothes_map()
+
+		return render(request, "clothing/index.html", {'clean_dict': clean_clothes, 'dirty_dict': dirty_clothes})
+	return render(request, "clothing/index.html", {})
 
 def logout_view(request):
 	logout(request)
